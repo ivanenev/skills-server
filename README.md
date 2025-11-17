@@ -8,6 +8,7 @@ A Model Context Protocol (MCP) server that serves specialized prompt libraries (
 - **🔄 Auto-Discovery**: Automatically scans and loads skills from configurable directory
 - **⚡ Hot Reload**: Skills update immediately without server restart
 - **🔧 Configurable**: Environment variable controls skills directory location
+
 - **📦 Universal**: Works with any MCP client (Roo Code, Claude Desktop, etc.)
 
 ## Installation
@@ -56,6 +57,7 @@ Each skill is a directory containing a `SKILL.md` file with YAML frontmatter:
 ```
 skill-name/
 └── SKILL.md
+
 ```
 
 ### SKILL.md Structure
