@@ -17,6 +17,7 @@ A Model Context Protocol (MCP) server that serves specialized prompt libraries (
 - Node.js 18+
 - npm or yarn
 
+
 ### Install Dependencies
 ```bash
 npm install
