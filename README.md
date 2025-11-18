@@ -9,7 +9,7 @@ A Model Context Protocol (MCP) server that serves specialized prompt libraries (
 - **⚡ Hot Reload**: Skills update immediately without server restart
 - **🔧 Configurable**: Environment variable controls skills directory location
 
-- **📦 Universal**: Works with any MCP client (Roo Code, Claude Desktop, etc.)
+- **📦 Universal**: Works with any MCP client (Cline, Claude Desktop, etc.)
 
 ## Installation
 
@@ -41,8 +41,8 @@ npm run build
 
 Add to your MCP client configuration:
 
-#### For Roo Code
-Add to your Roo Code MCP settings:
+#### For VS Code Exrensions
+Add to your extension config.jason:
 
 ```json
 {
@@ -134,15 +134,15 @@ You are an expert at managing Docker Compose services...
 
 ## Usage
 
-### With Roo Code
+### With VS Code extensions like Cline
 After configuration, skills are automatically available as tools:
 
 ```
 You: "Set up PostgreSQL database connection"
-Roo Code: [Loads postgres skill automatically]
+Cline: [Loads postgres skill automatically]
 
 You: "Test the API endpoints"
-Roo Code: [Loads system-testing skill automatically]
+Cline: [Loads system-testing skill automatically]
 ```
 
 ### With Other MCP Clients
@@ -215,8 +215,7 @@ MIT License - see LICENSE file for details.
 
 - [local-skills-mcp](https://github.com/kdpa-llc/local-skills-mcp) - Alternative file-based skills server
 - [MCP Protocol](https://modelcontextprotocol.io/) - Model Context Protocol specification
-- [Roo Code](https://roocode.com/) - AI coding assistant with MCP support
 
----
+
 
 **Built with [Model Context Protocol SDK](https://github.com/modelcontextprotocol/sdk)**
