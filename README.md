@@ -178,7 +178,7 @@ You are an expert at managing Docker Compose services...
 
 ## Usage
 
-### With VS Code extensions like Cline/Roo Code
+### With VS Code extensions like Cline
 After configuration, skills and lazy-mcp tools are automatically available:
 
 ```
