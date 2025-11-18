@@ -1,9 +1,10 @@
 #!/usr/bin/env node
 
 /**
- * Skills MCP Server
+ * Enhanced Skills MCP Server
  * Serves specialized prompt libraries (skills) from the ~/.skills directory
  * Provides token-efficient access to expert knowledge across domains
+ * Now includes Lazy-MCP Bridge for compatibility with hierarchical tool systems
  */
 
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
@@ -12,6 +13,8 @@ import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
+import { Client } from "@modelcontextprotocol/sdk/client/index.js";
+import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
@@ -28,10 +31,33 @@ interface Skill {
   path: string;
 }
 
+// Interface for lazy-mcp tool mapping
+interface LazyMCPTool {
+  name: string;           // Traditional MCP tool name
+  tool_path: string;      // Lazy-mcp hierarchical path
+  description: string;
+  inputSchema: any;
+  category: string;
+  source: 'lazy-mcp';     // Identifier for lazy-mcp tools
+}
+
 // Cache for loaded skills
 let skillsCache: Skill[] = [];
 let lastCacheTime = 0;
 const CACHE_DURATION = 5000; // 5 seconds
+
+// Lazy-MCP configuration
+// Auto-enable if command exists, regardless of environment variables
+const LAZY_MCP_COMMAND = process.env.LAZY_MCP_COMMAND || '/home/mts/mcp_servers/lazy-mcp/run-lazy-mcp.sh';
+const LAZY_MCP_ENABLED = process.env.LAZY_MCP_ENABLED === 'true' || fs.existsSync(LAZY_MCP_COMMAND);
+
+// Lazy-MCP client instance
+let lazyMCPClient: Client | null = null;
+
+// Cache for lazy-mcp tools
+let lazyMCPToolsCache: LazyMCPTool[] = [];
+let lastLazyMCPCacheTime = 0;
+const LAZY_MCP_CACHE_DURATION = 300000; // 5 minutes
 
 /**
  * Load and parse all skills from the skills directory
@@ -114,12 +140,173 @@ async function loadSkills(): Promise<Skill[]> {
 }
 
 /**
+ * Ensure lazy-mcp client is connected
+ */
+async function ensureLazyMCPConnection(): Promise<boolean> {
+  if (!LAZY_MCP_ENABLED) return false;
+
+  if (!lazyMCPClient) {
+    try {
+      lazyMCPClient = new Client(
+        {
+          name: "skills-server-lazy-mcp-client",
+          version: "0.1.0",
+        },
+        {
+          capabilities: {},
+        }
+      );
+
+      const transport = new StdioClientTransport({
+        command: LAZY_MCP_COMMAND,
+        args: [],
+      });
+
+      await lazyMCPClient.connect(transport);
+      console.error('Connected to lazy-mcp successfully');
+      return true;
+    } catch (error) {
+      console.error('Failed to connect to lazy-mcp:', error);
+      lazyMCPClient = null;
+      return false;
+    }
+  }
+  return true;
+}
+
+/**
+ * Scan lazy-mcp hierarchy and create traditional MCP tools
+ */
+async function scanLazyMCPHierarchy(path: string = ""): Promise<LazyMCPTool[]> {
+  const tools: LazyMCPTool[] = [];
+
+  try {
+    const result = await (lazyMCPClient as any).callTool({
+      name: "get_tools_in_category",
+      arguments: { path }
+    });
+
+    // Extract the actual data from MCP response
+    let responseData: any = null;
+    if ((result as any).content && (result as any).content.length > 0) {
+      const content = (result as any).content[0];
+      if (content.type === 'text') {
+        responseData = JSON.parse(content.text);
+      }
+    }
+
+    if (!responseData) return tools;
+
+    // Process leaf tools at this level
+    if (responseData.tools) {
+      for (const [toolName, toolDef] of Object.entries(responseData.tools)) {
+        const fullPath = path ? `${path}.${toolName}` : toolName;
+        tools.push(createTraditionalTool(fullPath, toolDef as any));
+      }
+    }
+
+    // Process children recursively - but only for main categories
+    if (responseData.children) {
+      for (const childPath in responseData.children) {
+        const child = responseData.children[childPath];
+        // Only recurse into main categories that we know have tools
+        const mainCategories = [
+          'brave-search', 'playwright', 'puppeteer', 'filesystem', 
+          'desktop-commander', 'memory', 'whatsapp-mcp', 'youtube'
+        ];
+        
+        if (mainCategories.includes(childPath)) {
+          const childTools = await scanLazyMCPHierarchy(childPath);
+          tools.push(...childTools);
+        }
+      }
+    }
+  } catch (error) {
+    console.error(`Error scanning lazy-mcp hierarchy at path ${path}:`, error);
+  }
+
+  return tools;
+}
+
+/**
+ * Create traditional MCP tool from lazy-mcp tool definition
+ */
+function createTraditionalTool(toolPath: string, toolDef: any): LazyMCPTool {
+  // Handle name collisions by prefixing with category
+  const parts = toolPath.split('.');
+  const category = parts[0];
+  const toolName = parts[parts.length - 1];
+
+  // Use category prefix to avoid collisions
+  const safeName = parts.length > 2 ? `${category}_${toolName}` : toolName;
+
+  return {
+    name: safeName,
+    tool_path: toolPath,
+    description: toolDef.description || 'No description available',
+    inputSchema: inferInputSchema(toolDef),
+    category: category,
+    source: 'lazy-mcp'
+  };
+}
+
+/**
+ * Infer input schema from tool definition
+ */
+function inferInputSchema(toolDef: any): any {
+  if (toolDef.inputSchema) {
+    return toolDef.inputSchema;
+  }
+
+  // Fallback for tools without explicit schema
+  return {
+    type: "object",
+    properties: {
+      input: {
+        type: "string",
+        description: "Input for this tool"
+      }
+    },
+    required: []
+  };
+}
+
+/**
+ * Load lazy-mcp tools with caching
+ */
+async function loadLazyMCPTools(): Promise<LazyMCPTool[]> {
+  const now = Date.now();
+
+  // Return cached tools if still fresh
+  if (lazyMCPToolsCache.length > 0 && (now - lastLazyMCPCacheTime) < LAZY_MCP_CACHE_DURATION) {
+    return lazyMCPToolsCache;
+  }
+
+  // Ensure connection
+  if (!(await ensureLazyMCPConnection())) {
+    console.error('Lazy-MCP not available, returning empty tools list');
+    return [];
+  }
+
+  try {
+    const tools = await scanLazyMCPHierarchy();
+    lazyMCPToolsCache = tools;
+    lastLazyMCPCacheTime = now;
+    console.error(`Loaded ${tools.length} lazy-mcp tools`);
+    return tools;
+  } catch (error) {
+    console.error('Error loading lazy-mcp tools:', error);
+    return [];
+  }
+}
+
+/**
  * Create an MCP server for serving skills
  */
 const server = new Server(
   {
-    name: "skills-server",
-    version: "0.1.0",
+    name: "enhanced-skills-server",
+    version: "0.2.0",
   },
   {
     capabilities: {
@@ -132,10 +319,27 @@ const server = new Server(
  * Handler for listing available skills as tools
  */
 server.setRequestHandler(ListToolsRequestSchema, async () => {
-  const skills = await loadSkills();
+  console.error('ListToolsRequest: Starting tool discovery...');
 
-  return {
-    tools: skills.map(skill => ({
+  const skills = await loadSkills();
+  console.error(`ListToolsRequest: Found ${skills.length} skills`);
+
+  let lazyMCPTools: LazyMCPTool[] = [];
+  if (LAZY_MCP_ENABLED) {
+    console.error('ListToolsRequest: Lazy-MCP enabled, attempting to load tools...');
+    try {
+      lazyMCPTools = await loadLazyMCPTools();
+      console.error(`ListToolsRequest: Successfully loaded ${lazyMCPTools.length} lazy-mcp tools`);
+    } catch (error) {
+      console.error('ListToolsRequest: Failed to load lazy-mcp tools:', error);
+    }
+  } else {
+    console.error('ListToolsRequest: Lazy-MCP disabled');
+  }
+
+  const allTools = [
+    // Skills tools
+    ...skills.map(skill => ({
       name: skill.name,
       description: skill.description,
       inputSchema: {
@@ -147,41 +351,84 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           }
         }
       }
+    })),
+    // Lazy-MCP tools
+    ...lazyMCPTools.map(tool => ({
+      name: tool.name,
+      description: `[${tool.category}] ${tool.description}`,
+      inputSchema: tool.inputSchema
     }))
-  };
+  ];
+
+  console.error(`ListToolsRequest: Returning ${allTools.length} total tools (${skills.length} skills + ${lazyMCPTools.length} lazy-mcp)`);
+
+  return { tools: allTools };
 });
 
 /**
- * Handler for calling skill tools
- * Returns the full skill content when requested
+ * Handler for calling skill tools and lazy-mcp tools
+ * Returns the full skill content or proxies lazy-mcp tool execution
  */
 server.setRequestHandler(CallToolRequestSchema, async (request) => {
-  const skills = await loadSkills();
-  const skill = skills.find(s => s.name === request.params.name);
+  const { name } = request.params;
 
-  if (!skill) {
-    throw new Error(`Skill '${request.params.name}' not found`);
+  // First check if it's a skill
+  const skills = await loadSkills();
+  const skill = skills.find(s => s.name === name);
+
+  if (skill) {
+    // Return the full skill content
+    return {
+      content: [{
+        type: "text",
+        text: skill.content
+      }]
+    };
   }
 
-  // Return the full skill content
-  return {
-    content: [{
-      type: "text",
-      text: skill.content
-    }]
-  };
+  // Check if it's a lazy-mcp tool
+  if (LAZY_MCP_ENABLED) {
+    const lazyMCPTools = await loadLazyMCPTools();
+    const lazyMCPTool = lazyMCPTools.find(t => t.name === name);
+
+    if (lazyMCPTool) {
+      // Proxy the call to lazy-mcp
+      try {
+        const result = await (lazyMCPClient as any).callTool({
+          name: "execute_tool",
+          arguments: {
+            tool_path: lazyMCPTool.tool_path,
+            arguments: request.params.arguments || {}
+          }
+        });
+
+        // Return the proxied result
+        return result;
+      } catch (error) {
+        console.error(`Error executing lazy-mcp tool ${name}:`, error);
+        throw new Error(`Failed to execute tool '${name}': ${error}`);
+      }
+    }
+  }
+
+  throw new Error(`Tool '${name}' not found`);
 });
 
 /**
  * Start the server using stdio transport
  */
 async function main() {
-  console.error(`Skills MCP Server starting...`);
+  console.error(`Enhanced Skills MCP Server v0.2.0 starting...`);
   console.error(`Skills directory: ${SKILLS_DIR}`);
+  console.error(`Lazy-MCP integration: ${LAZY_MCP_ENABLED ? 'ENABLED' : 'DISABLED'}`);
+
+  if (LAZY_MCP_ENABLED) {
+    console.error(`Lazy-MCP command: ${LAZY_MCP_COMMAND}`);
+  }
 
   const transport = new StdioServerTransport();
   await server.connect(transport);
-  console.error('Skills MCP server running on stdio');
+  console.error('Enhanced Skills MCP server running on stdio');
 }
 
 main().catch((error) => {

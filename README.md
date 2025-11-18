@@ -1,6 +1,6 @@
-# Skills MCP Server
+# Enhanced Skills MCP Server
 
-A Model Context Protocol (MCP) server that serves specialized prompt libraries (skills) from a local directory. Provides token-efficient access to expert knowledge across domains for any MCP-compatible client.
+A Model Context Protocol (MCP) server that serves specialized prompt libraries (skills) from a local directory AND provides a **Lazy-MCP Bridge** for compatibility with hierarchical tool systems. Provides token-efficient access to expert knowledge across domains for any MCP-compatible client.
 
 ## Features
 
@@ -8,7 +8,7 @@ A Model Context Protocol (MCP) server that serves specialized prompt libraries (
 - **🔄 Auto-Discovery**: Automatically scans and loads skills from configurable directory
 - **⚡ Hot Reload**: Skills update immediately without server restart
 - **🔧 Configurable**: Environment variable controls skills directory location
-
+- **🌉 Lazy-MCP Bridge**: Seamlessly integrates lazy-mcp hierarchical tools for maximum compatibility
 - **📦 Universal**: Works with any MCP client (Cline, Claude Desktop, etc.)
 
 ## Installation
@@ -36,6 +36,8 @@ npm run build
 
 ### Environment Variables
 - `SKILLS_DIR`: Path to skills directory (default: `~/.skills`)
+- `LAZY_MCP_ENABLED`: Enable Lazy-MCP Bridge integration (default: `false`)
+- `LAZY_MCP_COMMAND`: Command to run lazy-mcp server (default: lazy-mcp script path)
 
 ### MCP Client Setup
 
@@ -92,6 +94,22 @@ If running locally, use the full path to the built binary:
   }
 }
 ```
+
+## Lazy-MCP Bridge
+
+The server can integrate with [lazy-mcp](https://github.com/voicetreelab/lazy-mcp) to provide access to hierarchical tool systems. When enabled, the server automatically:
+
+1. **Discovers Tools**: Scans lazy-mcp's hierarchy and exposes tools as traditional MCP tools
+2. **Handles Execution**: Proxies tool calls through lazy-mcp's `execute_tool` mechanism
+3. **Maintains Efficiency**: Preserves lazy-mcp's token-saving benefits
+4. **Ensures Compatibility**: Works with MCP clients that expect direct tool access
+
+### Bridge Benefits
+
+- **🔗 Universal Access**: All lazy-mcp tools available in any MCP client
+- **⚡ Token Savings**: Hierarchical loading without client-side changes
+- **🔄 Seamless Integration**: No changes needed to existing lazy-mcp setups
+- **🛡️ Error Resilience**: Graceful fallback if lazy-mcp is unavailable
 
 ## Skills Format
 
