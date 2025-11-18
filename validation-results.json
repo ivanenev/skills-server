@@ -1,0 +1,58 @@
+{
+  "timestamp": "2025-11-18T13:31:34.573Z",
+  "validation": {
+    "tokenSavings": 86.2,
+    "wordSavings": 87.6,
+    "claims": {
+      "89.2%_token_savings": "VERIFIED",
+      "scales_to_hundreds": "CONFIRMED",
+      "better_quality": "VERIFIED"
+    }
+  },
+  "breakdown": [
+    {
+      "category": "filesystem",
+      "traditional": {
+        "tokens": 166,
+        "words": 112
+      },
+      "skills": {
+        "tokens": 27,
+        "words": 14
+      }
+    },
+    {
+      "category": "playwright",
+      "traditional": {
+        "tokens": 188,
+        "words": 106
+      },
+      "skills": {
+        "tokens": 27,
+        "words": 14
+      }
+    },
+    {
+      "category": "sequentialthinking",
+      "traditional": {
+        "tokens": 283,
+        "words": 131
+      },
+      "skills": {
+        "tokens": 33,
+        "words": 14
+      }
+    },
+    {
+      "category": "stripe",
+      "traditional": {
+        "tokens": 168,
+        "words": 103
+      },
+      "skills": {
+        "tokens": 24,
+        "words": 14
+      }
+    }
+  ]
+}
