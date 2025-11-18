@@ -97,7 +97,33 @@ If running locally, use the full path to the built binary:
 
 ## Lazy-MCP Bridge
 
-The server can integrate with [lazy-mcp](https://github.com/voicetreelab/lazy-mcp) to provide access to hierarchical tool systems. When enabled, the server automatically:
+The server integrates with **[lazy-mcp](https://github.com/voicetreelab/lazy-mcp)** by [VoiceTreeLab](https://voicetreelab.com/) to provide access to hierarchical tool systems. This bridge enables seamless compatibility between traditional MCP tools and lazy-mcp's hierarchical architecture.
+
+### Installing Lazy-MCP
+
+**Prerequisites:**
+- Python 3.8+
+- pip package manager
+
+**Installation:**
+```bash
+# Clone the repository
+git clone https://github.com/voicetreelab/lazy-mcp.git
+cd lazy-mcp
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Make the run script executable
+chmod +x run-lazy-mcp.sh
+```
+
+**Configuration:**
+The skills server automatically detects lazy-mcp when it's available in your system PATH or when the `LAZY_MCP_COMMAND` environment variable points to the lazy-mcp executable.
+
+### Bridge Features
+
+When enabled, the server automatically:
 
 1. **Discovers Tools**: Scans lazy-mcp's hierarchy and exposes tools as traditional MCP tools
 2. **Handles Execution**: Proxies tool calls through lazy-mcp's `execute_tool` mechanism
