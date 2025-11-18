@@ -1,20 +1,23 @@
 {
-  "name": "skills-server",
+  "name": "@skills-server/mcp",
   "version": "0.1.0",
-  "description": "Hege savings on tokens with skill use!",
-  "private": true,
+  "description": "MCP server for serving specialized prompt libraries (skills) from a local directory",
+  "private": false,
   "type": "module",
   "bin": {
     "skills-server": "./build/index.js"
   },
   "files": [
-    "build"
+    "build",
+    "README.md"
   ],
   "scripts": {
-    "build": "tsc && node -e \"require('fs').chmodSync('build/index.js', '755')\"",
+    "build": "tsc && node -e \"import('fs').then(fs => fs.default.chmodSync('build/index.js', 0o755))\"",
     "prepare": "npm run build",
     "watch": "tsc --watch",
-    "inspector": "npx @modelcontextprotocol/inspector build/index.js"
+    "inspector": "npx @modelcontextprotocol/inspector build/index.js",
+    "prepublishOnly": "npm run build && npm test",
+    "test": "node simple-test.js"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "0.6.0",
@@ -24,5 +27,33 @@
   "devDependencies": {
     "@types/node": "^20.11.24",
     "typescript": "^5.3.3"
-  }
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "skills",
+    "prompts",
+    "ai",
+    "llm",
+    "efficiency",
+    "token-optimization"
+  ],
+  "author": "Skills Server Team",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/skills-server/mcp.git"
+  },
+  "homepage": "https://github.com/skills-server/mcp#readme",
+  "bugs": {
+    "url": "https://github.com/skills-server/mcp/issues"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "os": [
+    "darwin",
+    "linux",
+    "win32"
+  ]
 }

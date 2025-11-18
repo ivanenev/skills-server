@@ -2,7 +2,7 @@
 
 /**
  * Skills MCP Server
- * Serves specialized prompt libraries (skills) from the ~/.skillz directory
+ * Serves specialized prompt libraries (skills) from the ~/.skills directory
  * Provides token-efficient access to expert knowledge across domains
  */
 
@@ -14,10 +14,11 @@ import {
 } from "@modelcontextprotocol/sdk/types.js";
 import * as fs from 'fs';
 import * as path from 'path';
+import * as os from 'os';
 import matter from 'gray-matter';
 
 // Skill directory - can be overridden with SKILLS_DIR env var
-const SKILLS_DIR = process.env.SKILLS_DIR || path.join(process.env.HOME || '', '.skillz');
+const SKILLS_DIR = process.env.SKILLS_DIR || path.join(os.homedir(), '.skills');
 
 // Interface for parsed skill data
 interface Skill {
@@ -46,10 +47,15 @@ async function loadSkills(): Promise<Skill[]> {
   const skills: Skill[] = [];
 
   try {
-    // Check if skills directory exists
+    // Check if skills directory exists, create if not
     if (!fs.existsSync(SKILLS_DIR)) {
-      console.error(`Skills directory not found: ${SKILLS_DIR}`);
-      return skills;
+      try {
+        fs.mkdirSync(SKILLS_DIR, { recursive: true });
+        console.error(`Created skills directory: ${SKILLS_DIR}`);
+      } catch (error) {
+        console.error(`Failed to create skills directory: ${SKILLS_DIR}`, error);
+        return skills;
+      }
     }
 
     // Read all skill directories
@@ -58,6 +64,11 @@ async function loadSkills(): Promise<Skill[]> {
       .map(dirent => dirent.name);
 
     for (const skillDir of skillDirs) {
+      // Validate skill directory name to prevent directory traversal
+      if (skillDir.includes('..') || skillDir.includes('/') || skillDir.includes('\\')) {
+        console.warn(`Invalid skill directory name: ${skillDir}, skipping`);
+        continue;
+      }
       const skillPath = path.join(SKILLS_DIR, skillDir);
       const skillMdPath = path.join(skillPath, 'SKILL.md');
 

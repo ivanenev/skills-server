@@ -1,0 +1,28 @@
+{
+  "timestamp": "2025-11-18T12:49:37.351Z",
+  "traditionalTokens": 10000,
+  "skillsTokens": 1080,
+  "savingsPercentage": 89.2,
+  "scenarios": [
+    {
+      "name": "filesystem",
+      "traditional": 2500,
+      "skills": 200
+    },
+    {
+      "name": "playwright",
+      "traditional": 3500,
+      "skills": 300
+    },
+    {
+      "name": "sequentialthinking",
+      "traditional": 1200,
+      "skills": 250
+    },
+    {
+      "name": "stripe",
+      "traditional": 2800,
+      "skills": 330
+    }
+  ]
+}

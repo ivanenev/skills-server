@@ -17,25 +17,67 @@ A Model Context Protocol (MCP) server that serves specialized prompt libraries (
 - Node.js 18+
 - npm or yarn
 
-
-### Install Dependencies
+### Global Installation (Recommended)
 ```bash
-npm install
+npm install -g @skills-server/mcp
 ```
 
-### Build
+This installs the `skills-server` command globally and makes it available in your PATH.
+
+### Local Installation (Development)
 ```bash
+git clone <repository-url>
+cd skills-server
+npm install
 npm run build
 ```
 
 ## Configuration
 
 ### Environment Variables
-- `SKILLS_DIR`: Path to skills directory (default: `~/.skillz`)
+- `SKILLS_DIR`: Path to skills directory (default: `~/.skills`)
 
 ### MCP Client Setup
 
 Add to your MCP client configuration:
+
+#### For Roo Code
+Add to your Roo Code MCP settings:
+
+```json
+{
+  "mcpServers": {
+    "skills-server": {
+      "command": "skills-server",
+      "env": {
+        "SKILLS_DIR": "~/.skills"
+      }
+    }
+  }
+}
+```
+
+#### For Claude Desktop
+Add to your `claude_desktop_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "skills-server": {
+      "command": "skills-server",
+      "env": {
+        "SKILLS_DIR": "~/.skills"
+      }
+    }
+  }
+}
+```
+
+#### For Other MCP Clients
+Use the `skills-server` command in your MCP server configuration.
+
+### Local Development Setup
+If running locally, use the full path to the built binary:
 
 ```json
 {
