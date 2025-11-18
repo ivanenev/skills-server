@@ -152,19 +152,22 @@ You are an expert at managing Docker Compose services...
 
 ## Usage
 
-### With VS Code extensions like Cline
-After configuration, skills are automatically available as tools:
+### With VS Code extensions like Cline/Roo Code
+After configuration, skills and lazy-mcp tools are automatically available:
 
 ```
+You: "Search for React component libraries"
+Cline: [Uses brave_web_search tool]
+
+You: "Navigate to example.com and take a screenshot"
+Cline: [Uses browser_navigate and browser_take_screenshot tools]
+
 You: "Set up PostgreSQL database connection"
 Cline: [Loads postgres skill automatically]
-
-You: "Test the API endpoints"
-Cline: [Loads system-testing skill automatically]
 ```
 
 ### With Other MCP Clients
-Skills appear as tools that return comprehensive expert guidance for specific domains.
+Skills and lazy-mcp tools appear as standard MCP tools. **Note:** Integration with Claude Code and other CLI tools has not been tested but should work based on MCP protocol compatibility.
 
 ## Architecture
 
