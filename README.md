@@ -2,6 +2,8 @@
 
 A Model Context Protocol (MCP) server that serves specialized prompt libraries (skills) from a local directory AND provides a **Lazy-MCP Bridge** for compatibility with hierarchical tool systems. Provides token-efficient access to expert knowledge across domains for any MCP-compatible client.
 
+> **⚠️ Platform Compatibility Note**: This server has been **tested and developed on Linux**. While the core skills functionality should work cross-platform, the Lazy-MCP Bridge integration contains Linux-specific paths and assumptions. Windows and macOS users may need to modify configuration or use alternative lazy-mcp setups.
+
 ## Features
 
 - **🚀 Token Efficient**: Only skill names/descriptions in context (~50 tokens/skill), full content on-demand
