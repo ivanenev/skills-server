@@ -39,7 +39,7 @@
     "token-optimization"
   ],
   "author": "Skills Server Team",
-  "license": "MIT",
+  "license": "GPL-3.0",
   "repository": {
     "type": "git",
     "url": "https://github.com/skills-server/mcp.git"

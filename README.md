@@ -209,7 +209,7 @@ node build/index.js
 
 ## License
 
-MIT License - see LICENSE file for details.
+GPL-3.0 License - see LICENSE file for details.
 
 ## Related Projects
 
