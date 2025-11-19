@@ -232,17 +232,17 @@ async function scanLazyMCPHierarchy(path: string = ""): Promise<LazyMCPTool[]> {
       }
     }
 
-    // Process children recursively - but only for main categories
+    // Process children recursively - but only for universal, non-database categories
     if (responseData.children) {
       for (const childPath in responseData.children) {
         const child = responseData.children[childPath];
-        // Only recurse into main categories that we know have tools
-        const mainCategories = [
-          'brave-search', 'playwright', 'puppeteer', 'filesystem', 
-          'desktop-commander', 'memory', 'whatsapp-mcp', 'youtube'
+        // Only include universal categories that don't require specific databases
+        const universalCategories = [
+          'brave-search', 'playwright', 'puppeteer', 'filesystem',
+          'desktop-commander', 'memory', 'youtube'
         ];
         
-        if (mainCategories.includes(childPath)) {
+        if (universalCategories.includes(childPath)) {
           const childTools = await scanLazyMCPHierarchy(childPath);
           tools.push(...childTools);
         }
