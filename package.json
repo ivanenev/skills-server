@@ -5,7 +5,7 @@
   "private": false,
   "type": "module",
   "bin": {
-    "skills-server": "./build/index.js"
+    "skills-server": "build/index.js"
   },
   "files": [
     "build",
@@ -42,7 +42,7 @@
   "license": "GPL-3.0",
   "repository": {
     "type": "git",
-    "url": "https://github.com/ivanenev/skills-server.git"
+    "url": "git+https://github.com/ivanenev/skills-server.git"
   },
   "homepage": "https://github.com/ivanenev/skills-server#readme",
   "bugs": {
