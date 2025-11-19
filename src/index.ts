@@ -47,9 +47,22 @@ let lastCacheTime = 0;
 const CACHE_DURATION = 5000; // 5 seconds
 
 // Lazy-MCP configuration
-// Auto-enable if command exists, regardless of environment variables
+// Respect LAZY_MCP_ENABLED environment variable first, then check if command exists
 const LAZY_MCP_COMMAND = process.env.LAZY_MCP_COMMAND || '/home/mts/mcp_servers/lazy-mcp/run-lazy-mcp.sh';
-const LAZY_MCP_ENABLED = process.env.LAZY_MCP_ENABLED === 'true' || fs.existsSync(LAZY_MCP_COMMAND);
+
+// Check environment variable first, then fall back to command existence
+function isLazyMCPEnabled(): boolean {
+  if (process.env.LAZY_MCP_ENABLED !== undefined) {
+    return process.env.LAZY_MCP_ENABLED === 'true';
+  }
+  // If not set, default to enabled if command exists
+  return fs.existsSync(LAZY_MCP_COMMAND);
+}
+
+// Make LAZY_MCP_ENABLED a function to check dynamically
+function getLazyMCPEnabled(): boolean {
+  return isLazyMCPEnabled();
+}
 
 // Lazy-MCP client instance
 let lazyMCPClient: Client | null = null;
@@ -143,7 +156,21 @@ async function loadSkills(): Promise<Skill[]> {
  * Ensure lazy-mcp client is connected
  */
 async function ensureLazyMCPConnection(): Promise<boolean> {
-  if (!LAZY_MCP_ENABLED) return false;
+  // Check environment variable dynamically on each call
+  if (!getLazyMCPEnabled()) {
+    // If disabled, ensure client is disconnected and cache is cleared
+    if (lazyMCPClient) {
+      try {
+        await lazyMCPClient.close();
+      } catch (error) {
+        // Ignore close errors
+      }
+      lazyMCPClient = null;
+    }
+    // Clear the tools cache when disabled
+    lazyMCPToolsCache = [];
+    return false;
+  }
 
   if (!lazyMCPClient) {
     try {
@@ -325,7 +352,8 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
   console.error(`ListToolsRequest: Found ${skills.length} skills`);
 
   let lazyMCPTools: LazyMCPTool[] = [];
-  if (LAZY_MCP_ENABLED) {
+  const lazyMcpEnabled = getLazyMCPEnabled();
+  if (lazyMcpEnabled) {
     console.error('ListToolsRequest: Lazy-MCP enabled, attempting to load tools...');
     try {
       lazyMCPTools = await loadLazyMCPTools();
@@ -334,7 +362,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       console.error('ListToolsRequest: Failed to load lazy-mcp tools:', error);
     }
   } else {
-    console.error('ListToolsRequest: Lazy-MCP disabled');
+    console.error('ListToolsRequest: Lazy-MCP disabled - only returning skills for token efficiency');
   }
 
   const allTools = [
@@ -351,16 +379,19 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           }
         }
       }
-    })),
-    // Lazy-MCP tools
-    ...lazyMCPTools.map(tool => ({
-      name: tool.name,
-      description: `[${tool.category}] ${tool.description}`,
-      inputSchema: tool.inputSchema
     }))
   ];
 
-  console.error(`ListToolsRequest: Returning ${allTools.length} total tools (${skills.length} skills + ${lazyMCPTools.length} lazy-mcp)`);
+  // Only add lazy-mcp tools if enabled (for token efficiency)
+  if (lazyMcpEnabled) {
+    allTools.push(...lazyMCPTools.map(tool => ({
+      name: tool.name,
+      description: `[${tool.category}] ${tool.description}`,
+      inputSchema: tool.inputSchema
+    })));
+  }
+
+  console.error(`ListToolsRequest: Returning ${allTools.length} total tools (${skills.length} skills + ${lazyMcpEnabled ? lazyMCPTools.length : 0} lazy-mcp)`);
 
   return { tools: allTools };
 });
@@ -387,7 +418,8 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
   }
 
   // Check if it's a lazy-mcp tool
-  if (LAZY_MCP_ENABLED) {
+  const lazyMcpEnabled = getLazyMCPEnabled();
+  if (lazyMcpEnabled) {
     const lazyMCPTools = await loadLazyMCPTools();
     const lazyMCPTool = lazyMCPTools.find(t => t.name === name);
 
@@ -418,11 +450,12 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
  * Start the server using stdio transport
  */
 async function main() {
+  const lazyMcpEnabled = getLazyMCPEnabled();
   console.error(`Enhanced Skills MCP Server v0.2.0 starting...`);
   console.error(`Skills directory: ${SKILLS_DIR}`);
-  console.error(`Lazy-MCP integration: ${LAZY_MCP_ENABLED ? 'ENABLED' : 'DISABLED'}`);
+  console.error(`Lazy-MCP integration: ${lazyMcpEnabled ? 'ENABLED' : 'DISABLED'}`);
 
-  if (LAZY_MCP_ENABLED) {
+  if (lazyMcpEnabled) {
     console.error(`Lazy-MCP command: ${LAZY_MCP_COMMAND}`);
   }
 

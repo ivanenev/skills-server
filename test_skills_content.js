@@ -25,30 +25,12 @@ async function testSkillsContent() {
     await client.connect(clientTransport);
     console.log("✅ Connected to enhanced skills-server successfully");
 
-    // Test 1: Get tool list and check what's sent
+    // Test 1: Get tool list using the client SDK (not raw JSON-RPC)
     console.log("\n📋 Test 1: Checking tool list content...");
-    const listRequest = {
-      jsonrpc: "2.0",
-      id: 1,
-      method: "tools/list",
-      params: {}
-    };
-
-    // Send raw JSON-RPC request to see exactly what's returned
-    const transport = client.transport;
-    await transport.send(JSON.stringify(listRequest));
+    const listResult = await client.listTools();
     
-    // Wait for response
-    const response = await new Promise((resolve) => {
-      transport.onmessage = (message) => {
-        resolve(JSON.parse(message));
-      };
-    });
-
     console.log("📊 Tool list response received");
-    
-    // Parse the tools from the response
-    const tools = response.result.tools;
+    const tools = listResult.tools;
     console.log(`📋 Total tools in list: ${tools.length}`);
 
     // Find our test skill in the list
@@ -63,26 +45,13 @@ async function testSkillsContent() {
 
     // Test 2: Call the test skill to get full content
     console.log("\n📄 Test 2: Calling Test Skill to get full content...");
-    const callRequest = {
-      jsonrpc: "2.0",
-      id: 2,
-      method: "tools/call",
-      params: {
-        name: "Test Skill",
-        arguments: { query: "test" }
-      }
-    };
-
-    await transport.send(JSON.stringify(callRequest));
-    
-    const callResponse = await new Promise((resolve) => {
-      transport.onmessage = (message) => {
-        resolve(JSON.parse(message));
-      };
+    const skillResult = await client.callTool({
+      name: "Test Skill",
+      arguments: { query: "test" }
     });
 
     console.log("📄 Full skill content received:");
-    const fullContent = callResponse.result.content[0].text;
+    const fullContent = skillResult.content[0].text;
     console.log("Content preview:", fullContent.substring(0, 200) + "...");
     
     // Verify it contains both front matter and content
