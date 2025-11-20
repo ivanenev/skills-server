@@ -181,14 +181,20 @@ async function scanLazyMCPHierarchy(path = "") {
                 tools.push(createTraditionalTool(fullPath, toolDef));
             }
         }
-        // Process children recursively - discover ALL MCP tools from lazy-mcp
+        // Process children recursively - but only for universal, non-database categories
         if (responseData.children) {
             for (const childPath in responseData.children) {
                 const child = responseData.children[childPath];
-                // Include ALL categories - let users decide which tools they need
-                const fullChildPath = path ? `${path}.${childPath}` : childPath;
-                const childTools = await scanLazyMCPHierarchy(fullChildPath);
-                tools.push(...childTools);
+                // Only include universal categories that don't require specific databases
+                const universalCategories = [
+                    'brave-search', 'playwright', 'puppeteer', 'filesystem',
+                    'desktop-commander', 'memory', 'youtube', 'fuse-optimizer',
+                    'brave-search-marketplace', 'playwright-marketplace', 'puppeteer-marketplace', 'whatsapp-mcp'
+                ];
+                if (universalCategories.includes(childPath)) {
+                    const childTools = await scanLazyMCPHierarchy(childPath);
+                    tools.push(...childTools);
+                }
             }
         }
     }
