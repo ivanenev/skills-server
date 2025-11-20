@@ -232,22 +232,16 @@ async function scanLazyMCPHierarchy(path: string = ""): Promise<LazyMCPTool[]> {
       }
     }
 
-    // Process children recursively - but only for universal, non-database categories
-    if (responseData.children) {
-      for (const childPath in responseData.children) {
-        const child = responseData.children[childPath];
-        // Only include universal categories that don't require specific databases
-        const universalCategories = [
-          'brave-search', 'playwright', 'puppeteer', 'filesystem',
-          'desktop-commander', 'memory', 'youtube'
-        ];
-        
-        if (universalCategories.includes(childPath)) {
-          const childTools = await scanLazyMCPHierarchy(childPath);
-          tools.push(...childTools);
+        // Process children recursively - discover ALL MCP tools from lazy-mcp
+        if (responseData.children) {
+          for (const childPath in responseData.children) {
+            const child = responseData.children[childPath];
+            // Include ALL categories - let users decide which tools they need
+            const fullChildPath = path ? `${path}.${childPath}` : childPath;
+            const childTools = await scanLazyMCPHierarchy(fullChildPath);
+            tools.push(...childTools);
+          }
         }
-      }
-    }
   } catch (error) {
     console.error(`Error scanning lazy-mcp hierarchy at path ${path}:`, error);
   }

@@ -1,6 +1,6 @@
 # MCP Tool Parameter Formats Guide
 
-This document provides the correct parameter formats for all MCP tools available through the enhanced-skills-server and lazy-mcp bridge.
+This document provides the correct parameter formats for all MCP tools availale thbrough the enhanced-skills-server and lazy-mcp bridge.
 
 ## Tool Categories and Parameter Formats
 
