@@ -139,6 +139,44 @@ When enabled, the server automatically:
 - **🔄 Seamless Integration**: No changes needed to existing lazy-mcp setups
 - **🛡️ Error Resilience**: Graceful fallback if lazy-mcp is unavailable
 
+
+## Customization
+
+### Important Note for Users
+
+**This package includes a pre-configured lazy-mcp setup optimized for the author's environment.** To get the full experience, you'll need to customize both the skills-server and your lazy-mcp configuration for your own setup.
+
+### 1. Customizing Tool Categories
+
+The skills-server filters lazy-mcp tools to prevent duplicates with VS Code extension internal tools. To customize which categories are included:
+
+**Edit `src/index.ts` (lines 239-243):**
+```typescript
+const universalCategories = [
+  'brave-search', 'playwright', 'puppeteer', 'filesystem',
+  'desktop-commander', 'memory', 'youtube', 'fuse-optimizer',
+  'brave-search-marketplace', 'playwright-marketplace', 'puppeteer-marketplace', 'whatsapp-mcp'
+];
+```
+
+**Modify this array to include the categories that match your available MCP servers.**
+
+### 2. Setting Up Your Own Lazy-MCP
+
+Your lazy-mcp configuration needs to point to your own MCP server locations:
+
+1. **Install lazy-mcp** following the [official documentation](https://github.com/voicetreelab/lazy-mcp)
+2. **Configure your MCP servers** in lazy-mcp's `config.json`
+3. **Update server paths** to match your installation locations
+4. **Regenerate the hierarchy** using lazy-mcp's structure generator
+
+### 3. Deployment Considerations
+
+- **Core skills functionality** works without lazy-mcp
+- **Lazy-mcp integration** requires your own lazy-mcp setup
+- **Tool filtering** prevents conflicts with VS Code extension internal tools
+- **Customization is expected** for optimal performance in your environment
+
 ## Skills Format
 
 Each skill is a directory containing a `SKILL.md` file with YAML frontmatter:
