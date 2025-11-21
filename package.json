@@ -1,6 +1,6 @@
 {
   "name": "@skills-server/mcp",
-  "version": "0.3.0",
+  "version": "0.2.5",
   "description": "Enhanced MCP server with progressive disclosure for token-efficient skill libraries and lazy-mcp bridge integration",
   "private": false,
   "type": "module",
