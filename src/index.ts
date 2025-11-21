@@ -29,6 +29,21 @@ interface Skill {
   description: string;
   content: string;
   path: string;
+  type?: string; // 'static' | 'executable'
+  allowed_tools?: string[];
+  execution_logic?: string;
+  parameters?: Record<string, any>;
+  skill_id?: string; // For container parameter support
+  version?: string; // For container parameter support
+}
+
+// Interface for container parameter support (Anthropic-compatible)
+interface SkillContainer {
+  skills: Array<{
+    type: 'anthropic' | 'custom';
+    skill_id: string;
+    version: string;
+  }>;
 }
 
 // Interface for lazy-mcp tool mapping
@@ -132,7 +147,13 @@ async function loadSkills(): Promise<Skill[]> {
           name: parsed.data.name,
           description: parsed.data.description,
           content: parsed.content,
-          path: skillMdPath
+          path: skillMdPath,
+          type: parsed.data.type || 'static',
+          allowed_tools: parsed.data.allowed_tools || [],
+          execution_logic: parsed.data.execution_logic || 'static',
+          parameters: parsed.data.parameters || {},
+          skill_id: parsed.data.skill_id || parsed.data.name,
+          version: parsed.data.version || 'latest'
         });
 
       } catch (error) {
@@ -300,6 +321,64 @@ function inferInputSchema(toolDef: any): any {
 }
 
 /**
+ * Generate dynamic instructions for executable skills
+ */
+function generateDynamicInstructions(skill: Skill, params: any): string {
+  const query = params.query || '';
+  const availableTools = skill.allowed_tools || [];
+  
+  let instructions = `# ${skill.name} - Dynamic Execution\n\n`;
+  instructions += `${skill.description}\n\n`;
+  
+  // Add context-aware instructions based on query
+  if (query) {
+    instructions += `## Task Context\n${query}\n\n`;
+  }
+  
+  // Add tool orchestration instructions
+  if (availableTools.length > 0) {
+    instructions += `## Available Tools\nYou have access to these tools: ${availableTools.join(', ')}\n\n`;
+    instructions += `## Tool Usage Strategy\n`;
+    instructions += `- Analyze the task and select appropriate tools\n`;
+    instructions += `- Use tools in sequence to accomplish the task\n`;
+    instructions += `- Combine tool outputs for comprehensive solutions\n`;
+    instructions += `- Handle errors gracefully and provide alternatives\n\n`;
+  }
+  
+  // Add skill-specific execution logic
+  instructions += `## Execution Instructions\n${skill.content}\n\n`;
+  
+  // Add dynamic behavior based on skill type
+  switch (skill.execution_logic) {
+    case 'conditional':
+      instructions += `## Conditional Logic\n`;
+      instructions += `- Analyze the input and context\n`;
+      instructions += `- Make decisions based on available information\n`;
+      instructions += `- Adapt your approach based on results\n`;
+      break;
+    case 'sequential':
+      instructions += `## Sequential Execution\n`;
+      instructions += `- Follow steps in logical order\n`;
+      instructions += `- Use output from previous steps as input to next\n`;
+      instructions += `- Validate each step before proceeding\n`;
+      break;
+    case 'parallel':
+      instructions += `## Parallel Execution\n`;
+      instructions += `- Execute multiple operations simultaneously\n`;
+      instructions += `- Coordinate results from parallel operations\n`;
+      instructions += `- Handle dependencies between operations\n`;
+      break;
+    default:
+      instructions += `## Standard Execution\n`;
+      instructions += `- Follow the provided instructions systematically\n`;
+      instructions += `- Use available tools as needed\n`;
+      instructions += `- Provide comprehensive solutions\n`;
+  }
+  
+  return instructions;
+}
+
+/**
  * Load lazy-mcp tools with caching
  */
 async function loadLazyMCPTools(): Promise<LazyMCPTool[]> {
@@ -387,7 +466,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
   if (lazyMcpEnabled) {
     allTools.push(...lazyMCPTools.map(tool => ({
       name: tool.name,
-      description: `[${tool.category}] ${tool.description}`,
+      description: `[${tool.category}] ${tool.description.length > 200 ? tool.description.substring(0, 200) + '...' : tool.description}`,
       inputSchema: tool.inputSchema
     })));
   }
@@ -409,13 +488,25 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
   const skill = skills.find(s => s.name === name);
 
   if (skill) {
-    // Return the full skill content
-    return {
-      content: [{
-        type: "text",
-        text: skill.content
-      }]
-    };
+    // Check if it's an executable skill
+    if (skill.type === 'executable') {
+      // Generate dynamic instructions based on context and available tools
+      const dynamicInstructions = generateDynamicInstructions(skill, request.params.arguments || {});
+      return {
+        content: [{
+          type: "text",
+          text: dynamicInstructions
+        }]
+      };
+    } else {
+      // Return the full static skill content
+      return {
+        content: [{
+          type: "text",
+          text: skill.content
+        }]
+      };
+    }
   }
 
   // Check if it's a lazy-mcp tool

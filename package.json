@@ -1,7 +1,7 @@
 {
   "name": "@skills-server/mcp",
-  "version": "0.2.4",
-  "description": "MCP server for serving specialized prompt libraries (skills) from a local directory",
+  "version": "0.3.0",
+  "description": "Enhanced MCP server with progressive disclosure for token-efficient skill libraries and lazy-mcp bridge integration",
   "private": false,
   "type": "module",
   "bin": {
@@ -17,7 +17,10 @@
     "watch": "tsc --watch",
     "inspector": "npx @modelcontextprotocol/inspector build/index.js",
     "prepublishOnly": "npm run build && npm test",
-    "test": "node simple-test.js"
+    "test": "node simple-test.js",
+    "test:all": "node test_runner.js",
+    "test:performance": "node test-comparison.js",
+    "test:progressive": "node test-progressive-disclosure.js"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "0.6.0",
