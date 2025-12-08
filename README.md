@@ -75,7 +75,7 @@ Add the server to your MCP client configuration. Example for MCP clients:
 
 For other clients (Cline, etc.), refer to [CONFIGURATION.md](CONFIGURATION.md#mcp-client-configuration).
 
-## Lazy-MCP Bridge
+## Lazy-MCP Bridge (not required - but recommended)
 
 The server integrates with **[lazy-mcp](https://github.com/voicetreelab/lazy-mcp)** by [VoiceTreeLab](https://voicetreelab.com/) to provide access to hierarchical tool systems. This bridge enables seamless compatibility between traditional MCP tools and lazy-mcp's hierarchical architecture.
 
