@@ -95,7 +95,7 @@ async function measureTokenSavings() {
 
   const transport = new StdioClientTransport({
     command: "node",
-    args: ["/home/mts/mcp_servers/skills-server/build/index.js"],
+    args: ["./build/index.js"],
   });
 
   try {

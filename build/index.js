@@ -22,7 +22,7 @@ let lastCacheTime = 0;
 const CACHE_DURATION = 5000; // 5 seconds
 // Lazy-MCP configuration
 // Respect LAZY_MCP_ENABLED environment variable first, then check if command exists
-const LAZY_MCP_COMMAND = process.env.LAZY_MCP_COMMAND || '/home/mts/mcp_servers/lazy-mcp/run-lazy-mcp.sh';
+const LAZY_MCP_COMMAND = process.env.LAZY_MCP_COMMAND || '../lazy-mcp/run-lazy-mcp.sh';
 // Check environment variable first, then fall back to command existence
 function isLazyMCPEnabled() {
     if (process.env.LAZY_MCP_ENABLED !== undefined) {
@@ -299,30 +299,54 @@ function generateDynamicInstructions(skill, params) {
     return instructions;
 }
 /**
- * Load lazy-mcp tools with caching
+ * Get lazy-mcp's native navigation tools (preserves progressive disclosure)
+ * Instead of flattening 166 tools → Only expose 2 navigation tools
+ * Token savings: ~25,000 tokens → ~500 tokens
  */
-async function loadLazyMCPTools() {
-    const now = Date.now();
-    // Return cached tools if still fresh
-    if (lazyMCPToolsCache.length > 0 && (now - lastLazyMCPCacheTime) < LAZY_MCP_CACHE_DURATION) {
-        return lazyMCPToolsCache;
-    }
+async function getLazyMCPNavigationTools() {
     // Ensure connection
     if (!(await ensureLazyMCPConnection())) {
-        console.error('Lazy-MCP not available, returning empty tools list');
+        console.error('Lazy-MCP not available');
         return [];
     }
-    try {
-        const tools = await scanLazyMCPHierarchy();
-        lazyMCPToolsCache = tools;
-        lastLazyMCPCacheTime = now;
-        console.error(`Loaded ${tools.length} lazy-mcp tools`);
-        return tools;
-    }
-    catch (error) {
-        console.error('Error loading lazy-mcp tools:', error);
-        return [];
-    }
+    console.error('Exposing lazy-mcp native navigation tools (progressive disclosure preserved)');
+    // Return lazy-mcp's native navigation tools as-is
+    // This preserves the hierarchical, token-efficient design
+    return [
+        {
+            name: "lazy_mcp_get_tools_in_category",
+            description: "Browse the lazy-mcp tool hierarchy progressively. You have 166 MCP tools across 15 categories available through progressive disclosure. Use this to explore available tools by category.\n\nCall with empty path \"\" to see root categories (brave-search, desktop-commander, filesystem, github, playwright, etc.).\n\nReturns children categories and tools at the specified path.",
+            inputSchema: {
+                type: "object",
+                properties: {
+                    path: {
+                        type: "string",
+                        description: "Category path using dot notation (e.g., 'brave-search' or 'desktop-commander'). Use empty string \"\" for root."
+                    }
+                },
+                required: ["path"]
+            }
+        },
+        {
+            name: "lazy_mcp_execute_tool",
+            description: "Execute a lazy-mcp tool by its full hierarchical path. First use lazy_mcp_get_tools_in_category to browse and find the tool path, then execute it with this tool.",
+            inputSchema: {
+                type: "object",
+                properties: {
+                    tool_path: {
+                        type: "string",
+                        description: "Full tool path using dot notation (e.g., 'brave-search.brave_web_search' or 'desktop-commander.read_file')"
+                    },
+                    arguments: {
+                        type: "object",
+                        additionalProperties: true,
+                        description: "Arguments to pass to the tool"
+                    }
+                },
+                required: ["tool_path", "arguments"]
+            }
+        }
+    ];
 }
 /**
  * Create an MCP server for serving skills
@@ -345,13 +369,13 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
     let lazyMCPTools = [];
     const lazyMcpEnabled = getLazyMCPEnabled();
     if (lazyMcpEnabled) {
-        console.error('ListToolsRequest: Lazy-MCP enabled, attempting to load tools...');
+        console.error('ListToolsRequest: Lazy-MCP enabled, exposing navigation tools...');
         try {
-            lazyMCPTools = await loadLazyMCPTools();
-            console.error(`ListToolsRequest: Successfully loaded ${lazyMCPTools.length} lazy-mcp tools`);
+            lazyMCPTools = await getLazyMCPNavigationTools();
+            console.error(`ListToolsRequest: Exposed ${lazyMCPTools.length} lazy-mcp navigation tools (progressive disclosure)`);
         }
         catch (error) {
-            console.error('ListToolsRequest: Failed to load lazy-mcp tools:', error);
+            console.error('ListToolsRequest: Failed to get lazy-mcp navigation tools:', error);
         }
     }
     else {
@@ -373,13 +397,9 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             }
         }))
     ];
-    // Only add lazy-mcp tools if enabled (for token efficiency)
+    // Add lazy-mcp navigation tools if enabled (preserves progressive disclosure)
     if (lazyMcpEnabled) {
-        allTools.push(...lazyMCPTools.map(tool => ({
-            name: tool.name,
-            description: `[${tool.category}] ${tool.description.length > 200 ? tool.description.substring(0, 200) + '...' : tool.description}`,
-            inputSchema: tool.inputSchema
-        })));
+        allTools.push(...lazyMCPTools);
     }
     console.error(`ListToolsRequest: Returning ${allTools.length} total tools (${skills.length} skills + ${lazyMcpEnabled ? lazyMCPTools.length : 0} lazy-mcp)`);
     return { tools: allTools };
@@ -415,27 +435,35 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
             };
         }
     }
-    // Check if it's a lazy-mcp tool
+    // Check if it's a lazy-mcp navigation tool
     const lazyMcpEnabled = getLazyMCPEnabled();
     if (lazyMcpEnabled) {
-        const lazyMCPTools = await loadLazyMCPTools();
-        const lazyMCPTool = lazyMCPTools.find(t => t.name === name);
-        if (lazyMCPTool) {
-            // Proxy the call to lazy-mcp
+        if (name === 'lazy_mcp_get_tools_in_category') {
+            // Proxy to lazy-mcp's get_tools_in_category
             try {
                 const result = await lazyMCPClient.callTool({
-                    name: "execute_tool",
-                    arguments: {
-                        tool_path: lazyMCPTool.tool_path,
-                        arguments: request.params.arguments || {}
-                    }
+                    name: "get_tools_in_category",
+                    arguments: request.params.arguments || {}
                 });
-                // Return the proxied result
                 return result;
             }
             catch (error) {
-                console.error(`Error executing lazy-mcp tool ${name}:`, error);
-                throw new Error(`Failed to execute tool '${name}': ${error}`);
+                console.error(`Error calling get_tools_in_category:`, error);
+                throw new Error(`Failed to browse lazy-mcp categories: ${error}`);
+            }
+        }
+        else if (name === 'lazy_mcp_execute_tool') {
+            // Proxy to lazy-mcp's execute_tool
+            try {
+                const result = await lazyMCPClient.callTool({
+                    name: "execute_tool",
+                    arguments: request.params.arguments || {}
+                });
+                return result;
+            }
+            catch (error) {
+                console.error(`Error executing lazy-mcp tool:`, error);
+                throw new Error(`Failed to execute lazy-mcp tool: ${error}`);
             }
         }
     }
