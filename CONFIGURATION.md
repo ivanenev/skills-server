@@ -1,6 +1,6 @@
-# Enhanced Skills Server Configuration Guide
+# Skills Server Configuration Guide
 
-This document details configuration options for the Enhanced Skills MCP Server, including environment variables, configuration files, and path customization.
+This document details configuration options for the Skills MCP Server, including environment variables, configuration files, and path customization.
 
 ## Table of Contents
 
@@ -43,6 +43,8 @@ The server uses environment variables for runtime configuration. These can be se
 | `LAZY_MCP_ENABLED` | Enable Lazy-MCP Bridge integration. If not set, the server auto-detects by checking if the command exists. | `false` (auto‑detect) | `true` |
 | `LAZY_MCP_COMMAND` | Command to run the lazy‑mcp server. Must be an executable script or binary. | `/home/mts/mcp_servers/lazy‑mcp/run‑lazy‑mcp.sh` (Linux‑specific) | `/path/to/lazy‑mcp/run‑lazy‑mcp.sh` |
 | `LAZY_MCP_CACHE_DURATION` | Cache duration for lazy‑mcp tool hierarchy (milliseconds). | `300000` (5 minutes) | `600000` |
+
+**Note:** Lazy‑MCP integration is optional but recommended for token savings when accessing large tool sets. The server works perfectly without it.
 
 ### Cache Configuration
 

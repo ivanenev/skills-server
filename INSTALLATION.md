@@ -1,6 +1,6 @@
-# Enhanced Skills Server Installation Guide
+# Skills Server Installation Guide
 
-This guide provides comprehensive installation instructions for the Enhanced Skills MCP Server across different platforms (Windows, macOS, Linux). It addresses platform-specific considerations, configuration, and troubleshooting.
+This guide provides comprehensive installation instructions for the Skills MCP Server across different platforms (Windows, macOS, Linux). It addresses platform-specific considerations, configuration, and troubleshooting.
 
 ## Table of Contents
 
@@ -27,7 +27,7 @@ This guide provides comprehensive installation instructions for the Enhanced Ski
 
 ## Prerequisites
 
-Before installing the Enhanced Skills Server, ensure you have the following:
+Before installing the Skills Server, ensure you have the following:
 
 - **Node.js 18+** – Download from [nodejs.org](https://nodejs.org/)
 - **npm** (comes with Node.js) or **yarn**
@@ -251,7 +251,7 @@ Refer to your client's documentation for adding MCP servers. Use the `skills-ser
 
 ## Lazy-MCP Integration
 
-The Enhanced Skills Server includes a bridge to [lazy-mcp](https://github.com/voicetreelab/lazy-mcp), a hierarchical tool system. This integration provides progressive disclosure of tools, significantly reducing token usage.
+The Skills Server includes an optional bridge to [lazy-mcp](https://github.com/voicetreelab/lazy-mcp), a hierarchical tool system. This integration provides progressive disclosure of tools, significantly reducing token usage. **Lazy-MCP is not strictly required** – the server works perfectly without it, but enabling it is recommended for token savings when accessing large tool sets.
 
 ### Installing Lazy-MCP
 
@@ -287,7 +287,7 @@ The Enhanced Skills Server includes a bridge to [lazy-mcp](https://github.com/vo
 
 ### Enabling the Bridge
 
-Set `LAZY_MCP_ENABLED=true` or ensure the lazy-mcp command exists at the path specified by `LAZY_MCP_COMMAND`. The server will automatically detect and connect to lazy-mcp.
+Set `LAZY_MCP_ENABLED=true` or ensure the lazy-mcp command exists at the path specified by `LAZY_MCP_COMMAND`. The server will automatically detect and connect to lazy-mcp. If you don't need lazy-mcp, leave `LAZY_MCP_ENABLED=false` (default) – the server will still provide skills functionality.
 
 ## Testing the Installation
 
@@ -299,10 +299,10 @@ After installation, verify that the server works correctly.
    ```
    You should see output like:
    ```
-   Enhanced Skills MCP Server v0.2.0 starting...
+   Skills MCP Server v0.2.0 starting...
    Skills directory: /home/user/.skills
    Lazy-MCP integration: ENABLED/DISABLED
-   Enhanced Skills MCP server running on stdio
+   Skills MCP server running on stdio
    ```
    Press Ctrl+C to stop.
 
@@ -364,7 +364,7 @@ After installation, verify that the server works correctly.
 
 ## Updating
 
-To update the Enhanced Skills Server:
+To update the Skills Server:
 
 **Global installation:**
 ```bash

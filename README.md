@@ -1,4 +1,4 @@
-# Enhanced Skills MCP Server
+# Skills MCP Server
 
 A Model Context Protocol (MCP) server that serves specialized prompt libraries (skills) from a local directory AND provides a **Lazy-MCP Bridge** for compatibility with hierarchical tool systems. Provides token-efficient access to expert knowledge across domains for any MCP-compatible client.
 

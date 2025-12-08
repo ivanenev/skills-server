@@ -1,6 +1,6 @@
-# Enhanced Skills Server Troubleshooting Guide
+# Skills Server Troubleshooting Guide
 
-This guide helps you diagnose and resolve common issues when installing and running the Enhanced Skills MCP Server.
+This guide helps you diagnose and resolve common issues when installing and running the Skills MCP Server.
 
 ## Table of Contents
 
@@ -33,7 +33,7 @@ This guide helps you diagnose and resolve common issues when installing and runn
 1. **Check versions**: Ensure Node.js >=18 and npm are installed.
 2. **Verify installation**: Run `skills-server --version` (global) or `node build/index.js` (local).
 3. **Review logs**: The server logs to stderr; examine output for error messages.
-4. **Test with minimal configuration**: Disable Lazy-MCP and use default skills directory.
+4. **Test with minimal configuration**: Disable Lazy-MCP (set `LAZY_MCP_ENABLED=false`) and use default skills directory to isolate issues.
 
 ## Installation Issues
 
@@ -183,6 +183,8 @@ Set the `LAZY_MCP_COMMAND` environment variable to the correct path.
 - In configuration files, expand `~` manually (e.g., `/home/username/.skills`).
 
 ## Lazy-MCP Integration Problems
+
+**Note:** Lazy‑MCP integration is optional. If you encounter persistent issues, you can disable it (`LAZY_MCP_ENABLED=false`) and still use the server’s core skills functionality.
 
 ### Connection Failures
 

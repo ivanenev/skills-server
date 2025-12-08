@@ -1,11 +1,11 @@
 # MCP Tool Parameter Formats Guide
 
-This document provides the correct parameter formats for all MCP tools availale thbrough the enhanced-skills-server and lazy-mcp bridge.
+This document provides the correct parameter formats for MCP tools available through the skills-server and its Lazy-MCP bridge.
 
 ## Tool Categories and Parameter Formats
 
-### 1. Enhanced Skills Server Tools
-**Server**: `enhanced-skills-server`
+### 1. Skills Server Tools
+**Server**: `skills-server`
 **Parameter Format**: Use `{"query": "your query string"}`
 
 **Working Tools**:
@@ -24,9 +24,11 @@ This document provides the correct parameter formats for all MCP tools availale 
 }
 ```
 
-### 2. Lazy-MCP Bridge Tools
-**Server**: `lazy-mcp`
+### 2. Lazy-MCP Bridge Tools (via Progressive Disclosure)
+**Server**: `skills-server` (using `lazy_mcp_execute_tool`)
 **Parameter Format**: Varies by tool category
+
+To access Lazy-MCP tools, you must first browse the hierarchy with `lazy_mcp_get_tools_in_category`, then execute a tool using its hierarchical path.
 
 #### 2.1 Desktop Commander Tools
 **Tool Path**: `desktop-commander.tool_name`
@@ -109,14 +111,14 @@ This document provides the correct parameter formats for all MCP tools availale 
 1. **Always use absolute paths** for file operations
 2. **Test tools individually** to understand their parameter requirements
 3. **Use desktop-commander** for file operations instead of filesystem tools
-4. **Check tool descriptions** using `get_tools_in_category` for parameter hints
+4. **Check tool descriptions** using `lazy_mcp_get_tools_in_category` for parameter hints
 5. **Start with simple queries** and add parameters as needed
 
 ## Quick Reference
 
 | Tool Category | Parameter Format | Example |
 |---------------|------------------|---------|
-| Enhanced Skills | `{"query": "..."}` | `{"query": "test"}` |
+| Skills Server | `{"query": "..."}` | `{"query": "test"}` |
 | Desktop Commander | Direct parameters | `{"path": "/path"}` |
 | Brave Search | `{"query": "..."}` | `{"query": "search"}` |
 | Memory | `{"query": "..."}` or `{}` | `{"query": "test"}` |
@@ -125,18 +127,26 @@ This document provides the correct parameter formats for all MCP tools availale 
 
 ## Testing Commands
 
-To test any tool, use:
-```javascript
-// For lazy-mcp tools
-use_mcp_tool("lazy-mcp", "execute_tool", {
-  "tool_path": "category.tool_name",
-  "arguments": { /* parameters */ }
-})
+To test any tool, use the progressive disclosure workflow:
 
-// For enhanced-skills-server tools  
-use_mcp_tool("enhanced-skills-server", "tool_name", {
-  "query": "your query"
-})
+```javascript
+// 1. Browse categories (optional)
+const categories = await use_mcp_tool("skills-server", "lazy_mcp_get_tools_in_category", {
+  "path": ""
+});
+
+// 2. Execute a tool via its hierarchical path
+const result = await use_mcp_tool("skills-server", "lazy_mcp_execute_tool", {
+  "tool_path": "brave-search.brave_web_search",
+  "arguments": { "query": "test search" }
+});
+
+// For skills server tools directly
+const skillResult = await use_mcp_tool("skills-server", "system-monitoring", {
+  "query": "test"
+});
 ```
+
+**Note:** Lazy-MCP integration is optional. If disabled, only skills server tools are available.
 
 This documentation should eliminate parameter format confusion and ensure consistent tool usage.
