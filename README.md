@@ -291,6 +291,7 @@ Skills and lazy-mcp tools appear as standard MCP tools. **Note:** Integration wi
 - **JSON Response Size**: 54% reduction (91KB → 42KB)
 - **Token Efficiency**: 95%+ reduction during tool discovery
 - **Lazy-MCP Token Savings**: 92.1% reduction (7,298 tokens → 574 tokens) measured via `measure-progressive-tokens.js`
+- **Skill Token Savings**: 96.5% reduction (12,328 tokens → 430 tokens) measured via `measure-progressive-tokens.js`
 - **Progressive Disclosure Fix**: Before fix: ~30,000 tokens, After fix: 574 tokens, Savings: 98.1% reduction
 - **Theoretical Maximum**: ~25,000+ tokens for full tool listing vs ~500 tokens with progressive disclosure
 - **Tool Discovery**: ~50 tokens per skill (metadata only)

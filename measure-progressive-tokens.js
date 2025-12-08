@@ -7,12 +7,77 @@
 
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
+import fs from 'fs/promises';
+import path from 'path';
+import os from 'os';
 
 class TokenCounter {
   static countTokens(text) {
     // Simple approximation: 1 token ≈ 4 characters for English text
     return Math.ceil(text.length / 4);
   }
+}
+
+/**
+ * Compute token savings for skills by comparing metadata tokens vs full content tokens.
+ * @param {Array} skills - Array of skill tools (from listTools)
+ * @returns {Promise<Object>} Object containing metadataTokens, fullContentTokens, savings, percentageReduction
+ */
+async function computeSkillTokenSavings(skills) {
+  // Determine skills directory
+  const skillsDir = process.env.SKILLS_DIR || path.join(os.homedir(), '.skills');
+  console.log(`   📁 Skills directory: ${skillsDir}`);
+
+  // Compute metadata tokens
+  let totalMetadataTokens = 0;
+  for (const skill of skills) {
+    const metadataText = `${skill.name}: ${skill.description}`;
+    totalMetadataTokens += TokenCounter.countTokens(metadataText);
+  }
+
+  // Read all SKILL.md files in the skills directory
+  let totalFullContentTokens = 0;
+  let missingFiles = 0;
+  let skillFilesCount = 0;
+
+  try {
+    const entries = await fs.readdir(skillsDir, { withFileTypes: true });
+    for (const entry of entries) {
+      if (entry.isDirectory()) {
+        const skillFilePath = path.join(skillsDir, entry.name, 'SKILL.md');
+        try {
+          const content = await fs.readFile(skillFilePath, 'utf-8');
+          totalFullContentTokens += TokenCounter.countTokens(content);
+          skillFilesCount++;
+        } catch (err) {
+          if (err.code === 'ENOENT') {
+            missingFiles++;
+          } else {
+            console.warn(`   ⚠️ Could not read ${skillFilePath}: ${err.message}`);
+          }
+        }
+      }
+    }
+  } catch (err) {
+    console.error(`   ❌ Failed to read skills directory: ${err.message}`);
+    // Fallback: assume no full content tokens
+  }
+
+  if (missingFiles > 0) {
+    console.log(`   ⚠️ ${missingFiles} skill directories missing SKILL.md files`);
+  }
+
+  const savings = totalFullContentTokens - totalMetadataTokens;
+  const percentageReduction = totalFullContentTokens > 0 ? (savings / totalFullContentTokens) * 100 : 0;
+
+  return {
+    metadataTokens: totalMetadataTokens,
+    fullContentTokens: totalFullContentTokens,
+    savings,
+    percentageReduction,
+    skillFilesCount,
+    missingFiles
+  };
 }
 
 async function measureTokenSavings() {
@@ -141,6 +206,18 @@ async function measureTokenSavings() {
     console.log(`   💰 Token savings: ${tokenSavings} tokens`);
     console.log(`   📉 Percentage reduction: ${percentageSavings}%`);
     console.log(`   📊 Current vs Full: ${currentTokens} tokens vs ${estimatedFullExposureTokensAccurate} tokens`);
+
+    // Skill token savings
+    console.log("\n🎯 Skill Progressive Disclosure Savings:");
+    const skillSavings = await computeSkillTokenSavings(skills);
+    console.log(`   📊 Skills count: ${skills.length}`);
+    console.log(`   🪙 Metadata tokens: ${skillSavings.metadataTokens}`);
+    console.log(`   📚 Full content tokens: ${skillSavings.fullContentTokens}`);
+    console.log(`   💰 Token savings: ${skillSavings.savings} tokens`);
+    console.log(`   📉 Percentage reduction: ${skillSavings.percentageReduction.toFixed(1)}%`);
+    if (skillSavings.missingFiles > 0) {
+      console.log(`   ⚠️ ${skillSavings.missingFiles} skills missing files`);
+    }
     
     // Verify the fix is working
     console.log("\n✅ Verification:");
@@ -186,6 +263,7 @@ async function measureTokenSavings() {
     console.log(`Current token usage: ${currentTokens} tokens`);
     console.log(`Estimated full exposure: ${estimatedFullExposureTokensAccurate} tokens`);
     console.log(`Token savings: ${tokenSavings} tokens (${percentageSavings}% reduction)`);
+    console.log(`Skill token savings: ${skillSavings.savings} tokens (${skillSavings.percentageReduction.toFixed(1)}% reduction)`);
     console.log(`Fix status: ${lazyMCPTools.length === 2 ? 'WORKING' : 'BROKEN'}`);
     console.log(`Efficiency: ${percentageSavings > 90 ? 'EXCELLENT' : 'NEEDS IMPROVEMENT'}`);
     
