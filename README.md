@@ -6,17 +6,17 @@ A Model Context Protocol (MCP) server that serves specialized prompt libraries (
 
 ## Features
 
-- **🚀 Progressive Disclosure**: Only skill metadata in context (~50 tokens/skill), full content loaded on-demand
-- **💰 Token Efficient**: 95%+ reduction in token usage during tool discovery
-- **� Auto-Discovery**: Automatically scans and loads skills from configurable directory
-- **⚡ Hot Reload**: Skills update immediately without server restart
-- **🔧 Configurable**: Environment variable controls skills directory location
-- **🌉 Lazy-MCP Bridge**: Seamlessly integrates lazy-mcp hierarchical tools for maximum compatibility
-- **📦 Universal**: Works with any MCP client (Cline, Claude Desktop, etc.)
-- **🛡️ Skill Validation**: Enforces naming conventions and content rules
-- **🤖 Executable Skills**: Dynamic instruction generation with tool orchestration
-- **🔄 Dynamic Behavior**: Context-aware skill execution with parameter support
-- **🔗 Tool Orchestration**: Skills can specify and use available tools
+- **Progressive Disclosure**: Only skill metadata in context (~50 tokens/skill), full content loaded on-demand
+- **Token Efficient**: 95%+ reduction in token usage during tool discovery
+- **Auto-Discovery**: Automatically scans and loads skills from configurable directory
+- **Hot Reload**: Skills update immediately without server restart
+- **Configurable**: Environment variable controls skills directory location
+- **Lazy-MCP Bridge**: Seamlessly integrates lazy-mcp hierarchical tools via progressive disclosure (only 2 navigation tools exposed initially)
+- **Universal**: Works with any MCP client (Cline, Claude Desktop, etc.)
+- **Skill Validation**: Enforces naming conventions and content rules
+- **Executable Skills**: Dynamic instruction generation with tool orchestration
+- **Dynamic Behavior**: Context-aware skill execution with parameter support
+- **Tool Orchestration**: Skills can specify and use available tools
 
 ## Installation
 
@@ -50,8 +50,8 @@ npm run build
 
 Add to your MCP client configuration:
 
-#### For VS Code Exrensions
-Add to your extension config.jason:
+#### For VS Code Extensions
+Add to your extension config.json:
 
 ```json
 {
@@ -132,18 +132,17 @@ The skills server automatically detects lazy-mcp when it's available in your sys
 
 When enabled, the server automatically:
 
-1. **Discovers Tools**: Scans lazy-mcp's hierarchy and exposes tools as traditional MCP tools
-2. **Handles Execution**: Proxies tool calls through lazy-mcp's `execute_tool` mechanism
-3. **Maintains Efficiency**: Preserves lazy-mcp's token-saving benefits
-4. **Ensures Compatibility**: Works with MCP clients that expect direct tool access
+1. **Progressive Disclosure**: Exposes only two navigation tools (`lazy_mcp_get_tools_in_category` and `lazy_mcp_execute_tool`) instead of flattening all 143+ tools.
+2. **Token Efficiency**: Preserves lazy-mcp's hierarchical token savings (~500 tokens vs. 25,000+ for full tool listing).
+3. **Seamless Integration**: No changes needed to existing lazy-mcp setups.
+4. **Error Resilience**: Graceful fallback if lazy-mcp is unavailable.
 
 ### Bridge Benefits
 
-- **🔗 Universal Access**: All lazy-mcp tools available in any MCP client
-- **⚡ Token Savings**: Hierarchical loading without client-side changes
-- **🔄 Seamless Integration**: No changes needed to existing lazy-mcp setups
-- **🛡️ Error Resilience**: Graceful fallback if lazy-mcp is unavailable
-
+- **Universal Access**: All lazy-mcp tools available in any MCP client via progressive navigation.
+- **Token Savings**: Hierarchical loading without client-side changes.
+- **Backward Compatibility**: Works with MCP clients that expect direct tool access.
+- **Preserved Hierarchy**: Maintains lazy-mcp's organizational structure.
 
 ## Customization
 
@@ -177,10 +176,10 @@ Your lazy-mcp configuration needs to point to your own MCP server locations:
 
 ### 3. Deployment Considerations
 
-- **Core skills functionality** works without lazy-mcp
-- **Lazy-mcp integration** requires your own lazy-mcp setup
-- **Tool filtering** prevents conflicts with VS Code extension internal tools
-- **Customization is expected** for optimal performance in your environment
+- **Core skills functionality** works without lazy-mcp.
+- **Lazy-mcp integration** requires your own lazy-mcp setup.
+- **Tool filtering** prevents conflicts with VS Code extension internal tools.
+- **Customization is expected** for optimal performance in your environment.
 
 ## Skills Format
 
@@ -189,7 +188,6 @@ Each skill is a directory containing a `SKILL.md` file with YAML frontmatter:
 ```
 skill-name/
 └── SKILL.md
-
 ```
 
 ### SKILL.md Structure
@@ -261,14 +259,16 @@ Always provide clear explanations of your findings and step-by-step solutions.
 ## Usage
 
 ### With VS Code extensions like Cline
-After configuration, skills and lazy-mcp tools are automatically available:
+After configuration, skills and lazy-mcp tools are automatically available via progressive disclosure:
 
 ```
 You: "Search for React component libraries"
-Cline: [Uses brave_web_search tool]
+Cline: [Uses lazy_mcp_get_tools_in_category to find brave-search category,
+        then lazy_mcp_execute_tool with tool_path "brave-search.brave_web_search"]
 
 You: "Navigate to example.com and take a screenshot"
-Cline: [Uses browser_navigate and browser_take_screenshot tools]
+Cline: [Uses lazy_mcp_execute_tool with tool_path "playwright.browser_navigate",
+        then lazy_mcp_execute_tool with tool_path "playwright.browser_take_screenshot"]
 
 You: "Set up PostgreSQL database connection"
 Cline: [Loads postgres skill automatically]
@@ -280,11 +280,12 @@ Skills and lazy-mcp tools appear as standard MCP tools. **Note:** Integration wi
 ## Progressive Disclosure Architecture
 
 ### How It Works
-1. **Discovery**: Server scans `SKILLS_DIR` for skill directories
-2. **Metadata Loading**: Reads only YAML frontmatter (name, description) for tool discovery
-3. **Tool Registration**: Creates MCP tools with metadata-only information
-4. **Progressive Loading**: Full content loaded only when skills are actually called
-5. **Token Efficiency**: ~50 tokens per skill during discovery vs 1500+ tokens for full content
+1. **Discovery**: Server scans `SKILLS_DIR` for skill directories.
+2. **Metadata Loading**: Reads only YAML frontmatter (name, description) for tool discovery.
+3. **Tool Registration**: Creates MCP tools with metadata-only information.
+4. **Lazy-MCP Integration**: When enabled, exposes only two navigation tools (`lazy_mcp_get_tools_in_category` and `lazy_mcp_execute_tool`) instead of flattening all 143+ tools.
+5. **Progressive Loading**: Full tool details loaded only when browsing categories; full skill content loaded only when skills are actually called.
+6. **Token Efficiency**: ~50 tokens per skill during discovery vs 1500+ tokens for full content; ~500 tokens for lazy-mcp navigation vs 25,000+ for full tool listing.
 
 ### Validated Performance Metrics
 - **JSON Response Size**: 54% reduction (91KB → 42KB)
@@ -348,10 +349,18 @@ The server includes comprehensive tests that validate:
 - **get_skill**: Returns full content of requested skill
   - Input: `skill_name` (string)
   - Output: Complete skill markdown content
+- **lazy_mcp_get_tools_in_category**: Browse lazy-mcp tool hierarchy
+  - Input: `path` (string) – category path using dot notation (empty string for root)
+  - Output: JSON structure with child categories and tools at that path
+- **lazy_mcp_execute_tool**: Execute a lazy-mcp tool by its hierarchical path
+  - Input: `tool_path` (string), `arguments` (object)
+  - Output: Tool execution result
 
 ### Configuration Options
 - `SKILLS_DIR`: Directory containing skill folders
 - `CACHE_DURATION`: Skill cache duration in milliseconds (default: 5000)
+- `LAZY_MCP_ENABLED`: Enable lazy-mcp integration (default: false)
+- `LAZY_MCP_COMMAND`: Path to lazy-mcp executable
 
 ## Contributing
 
@@ -369,7 +378,5 @@ GPL-3.0 License - see LICENSE file for details.
 
 - [local-skills-mcp](https://github.com/kdpa-llc/local-skills-mcp) - Alternative file-based skills server
 - [MCP Protocol](https://modelcontextprotocol.io/) - Model Context Protocol specification
-
-
 
 **Built with [Model Context Protocol SDK](https://github.com/modelcontextprotocol/sdk)**
