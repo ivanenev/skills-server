@@ -63,7 +63,7 @@ async function testSkillsPerformance() {
 
   const transport = new StdioClientTransport({
     command: "node",
-    args: ["/home/mts/mcp_servers/skills-server/build/index.js"],
+    args: ["./build/index.js"],
   });
 
   try {
@@ -197,8 +197,8 @@ async function testSkillsPerformance() {
     results.tokenEfficiency = {
       skillToolListTokens,
       lazyMCPToolListTokens,
-      skillToolListTokensPerTool: Math.round(skillToolListTokens / skills.length),
-      lazyMCPToolListTokensPerTool: Math.round(lazyMCPToolListTokens / lazyMCPTools.length),
+      skillToolListTokensPerTool: skills.length > 0 ? Math.round(skillToolListTokens / skills.length) : 0,
+      lazyMCPToolListTokensPerTool: lazyMCPTools.length > 0 ? Math.round(lazyMCPToolListTokens / lazyMCPTools.length) : 0,
       totalToolListTokens: skillToolListTokens + lazyMCPToolListTokens
     };
     
@@ -221,7 +221,7 @@ async function testSkillsPerformance() {
     console.log(`  📊 Range: ${results.skillExecution.minTimeMs.toFixed(2)}ms - ${results.skillExecution.maxTimeMs.toFixed(2)}ms`);
     console.log(`  🪙 Avg Tokens: ${Math.round(results.skillExecution.avgTokens)}`);
     
-    if (results.lazyMCPExecution) {
+    if (results.lazyMCPExecution && results.lazyMCPExecution.avgTimeMs !== undefined) {
       console.log(`\nLazy-MCP Execution:`);
       console.log(`  ⏱️  Avg Time: ${results.lazyMCPExecution.avgTimeMs.toFixed(2)}ms`);
       console.log(`  📊 Range: ${results.lazyMCPExecution.minTimeMs.toFixed(2)}ms - ${results.lazyMCPExecution.maxTimeMs.toFixed(2)}ms`);

@@ -4,6 +4,8 @@ A Model Context Protocol (MCP) server that serves specialized prompt libraries (
 
 > **⚠️ Platform Compatibility Note**: This server has been **tested and developed on Linux**. While the core skills functionality should work cross-platform, the Lazy-MCP Bridge integration contains Linux-specific paths and assumptions. Windows and macOS users may need to modify configuration or use alternative lazy-mcp setups.
 
+> **📘 Detailed Installation Guide**: For comprehensive platform-specific instructions, see [INSTALLATION.md](INSTALLATION.md).
+
 ## Features
 
 - **Progressive Disclosure**: Only skill metadata in context (~50 tokens/skill), full content loaded on-demand
@@ -20,38 +22,44 @@ A Model Context Protocol (MCP) server that serves specialized prompt libraries (
 
 ## Installation
 
-### Prerequisites
-- Node.js 18+
-- npm or yarn
+For detailed installation instructions covering Windows, macOS, and Linux, see [INSTALLATION.md](INSTALLATION.md).
 
-### Global Installation (Recommended)
-```bash
-npm install -g @skills-server/mcp
-```
+### Quick Start
 
-This installs the `skills-server` command globally and makes it available in your PATH.
+1. **Prerequisites**: Node.js 18+, npm or yarn.
+2. **Global installation** (recommended):
+   ```bash
+   npm install -g @skills-server/mcp
+   ```
+   This installs the `skills-server` command globally.
+3. **Local development**:
+   ```bash
+   git clone https://github.com/ivanenev/skills-server.git
+   cd skills-server
+   npm install
+   npm run build
+   ```
 
-### Local Installation (Development)
-```bash
-git clone <repository-url>
-cd skills-server
-npm install
-npm run build
-```
+### Next Steps
+- Configure environment variables (see [CONFIGURATION.md](CONFIGURATION.md)).
+- Set up your skills directory (default `~/.skills`).
+- Integrate with your MCP client (Claude Desktop, Cline, etc.).
+
+For troubleshooting, refer to [TROUBLESHOOTING.md](TROUBLESHOOTING.md).
 
 ## Configuration
 
-### Environment Variables
-- `SKILLS_DIR`: Path to skills directory (default: `~/.skills`)
-- `LAZY_MCP_ENABLED`: Enable Lazy-MCP Bridge integration (default: `false`)
-- `LAZY_MCP_COMMAND`: Command to run lazy-mcp server (default: lazy-mcp script path)
+For detailed configuration options, environment variables, and path customization, see [CONFIGURATION.md](CONFIGURATION.md).
+
+### Quick Reference
+
+- **Skills Directory**: Set `SKILLS_DIR` environment variable (default: `~/.skills`).
+- **Lazy-MCP Integration**: Enable with `LAZY_MCP_ENABLED=true` and set `LAZY_MCP_COMMAND` to your lazy-mcp executable.
+- **Cache Duration**: Control with `CACHE_DURATION` (default: 5000 ms).
 
 ### MCP Client Setup
 
-Add to your MCP client configuration:
-
-#### For VS Code Extensions
-Add to your extension config.json:
+Add the server to your MCP client configuration. Example for Claude Desktop:
 
 ```json
 {
@@ -59,48 +67,15 @@ Add to your extension config.json:
     "skills-server": {
       "command": "skills-server",
       "env": {
-        "SKILLS_DIR": "~/.skills"
+        "SKILLS_DIR": "~/.skills",
+        "LAZY_MCP_ENABLED": "true"
       }
     }
   }
 }
 ```
 
-#### For Claude Desktop
-Add to your `claude_desktop_config.json`:
-
-```json
-{
-  "mcpServers": {
-    "skills-server": {
-      "command": "skills-server",
-      "env": {
-        "SKILLS_DIR": "~/.skills"
-      }
-    }
-  }
-}
-```
-
-#### For Other MCP Clients
-Use the `skills-server` command in your MCP server configuration.
-
-### Local Development Setup
-If running locally, use the full path to the built binary:
-
-```json
-{
-  "mcpServers": {
-    "skills-server": {
-      "command": "node",
-      "args": ["/path/to/skills-server/build/index.js"],
-      "env": {
-        "SKILLS_DIR": "/path/to/your/skills"
-      }
-    }
-  }
-}
-```
+For other clients (Cline, etc.), refer to [CONFIGURATION.md](CONFIGURATION.md#mcp-client-configuration).
 
 ## Lazy-MCP Bridge
 

@@ -17,7 +17,7 @@ async function testLazyMCP() {
   );
 
   const transport = new StdioClientTransport({
-    command: "/home/mts/mcp_servers/lazy-mcp/run-lazy-mcp.sh",
+    command: "../lazy-mcp/run-lazy-mcp.sh",
     args: [],
   });
 
