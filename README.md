@@ -2,7 +2,7 @@
 
 A Model Context Protocol (MCP) server that serves specialized prompt libraries (skills) from a local directory AND provides a **Lazy-MCP Bridge** for compatibility with hierarchical tool systems. Provides token-efficient access to expert knowledge across domains for any MCP-compatible client.
 
-> **Platform Compatibility**: This server has been **tested and developed on Linux**. The core skills functionality works cross-platform, but the Lazy-MCP Bridge integration may require configuration adjustments on Windows and macOS. For detailed platform-specific instructions, see [INSTALLATION.md](INSTALLATION.md).
+> **Platform Compatibility**: This server has been **tested and developed on Linux**, but should work on macOS and Windows with proper configuration. The core skills functionality works across all platforms, while the Lazy-MCP Bridge integration requires platform-specific configuration adjustments. For detailed platform-specific instructions, see [INSTALLATION.md](INSTALLATION.md).
 
 ## Features
 
@@ -12,7 +12,7 @@ A Model Context Protocol (MCP) server that serves specialized prompt libraries (
 - **Hot Reload**: Skills update immediately without server restart
 - **Configurable**: Environment variable controls skills directory location
 - **Lazy-MCP Bridge**: Seamlessly integrates lazy-mcp hierarchical tools via progressive disclosure (only 2 navigation tools exposed initially)
-- **Universal**: Works with any MCP client (Cline, Claude Desktop, etc.)
+- **Universal**: Works with any MCP client (Cline and other CLI tools)
 - **Skill Validation**: Enforces naming conventions and content rules
 - **Executable Skills**: Dynamic instruction generation with tool orchestration
 - **Dynamic Behavior**: Context-aware skill execution with parameter support
@@ -41,7 +41,7 @@ For detailed installation instructions covering Windows, macOS, and Linux, see [
 ### Next Steps
 - Configure environment variables (see [CONFIGURATION.md](CONFIGURATION.md)).
 - Set up your skills directory (default `~/.skills`).
-- Integrate with your MCP client (Claude Desktop, Cline, etc.).
+- Integrate with your MCP client (Cline and other CLI tools).
 
 For troubleshooting, refer to [TROUBLESHOOTING.md](TROUBLESHOOTING.md).
 
@@ -57,7 +57,7 @@ For detailed configuration options, environment variables, and path customizatio
 
 ### MCP Client Setup
 
-Add the server to your MCP client configuration. Example for Claude Desktop:
+Add the server to your MCP client configuration. Example for MCP clients:
 
 ```json
 {
@@ -310,6 +310,9 @@ node test_runner.js
 
 # Validate progressive disclosure
 node test-progressive-disclosure.js
+
+# Measure token savings
+node measure-progressive-tokens.js
 ```
 
 ### Progressive Disclosure Validation
@@ -353,7 +356,6 @@ GPL-3.0 License - see LICENSE file for details.
 
 ## Related Projects
 
-- [local-skills-mcp](https://github.com/kdpa-llc/local-skills-mcp) - Alternative file-based skills server
 - [MCP Protocol](https://modelcontextprotocol.io/) - Model Context Protocol specification
 
 **Built with [Model Context Protocol SDK](https://github.com/modelcontextprotocol/sdk)**

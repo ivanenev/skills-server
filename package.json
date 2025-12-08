@@ -1,9 +1,10 @@
 {
   "name": "@skills-server/mcp",
-  "version": "0.2.5",
-  "description": "Enhanced MCP server with progressive disclosure for token-efficient skill libraries and lazy-mcp bridge integration",
+  "version": "3.0.0",
+  "description": "Enhanced Skills MCP Server with progressive disclosure and token efficiency",
   "private": false,
   "type": "module",
+  "main": "build/index.js",
   "bin": {
     "skills-server": "build/index.js"
   },
@@ -41,7 +42,7 @@
     "efficiency",
     "token-optimization"
   ],
-  "author": "Skills Server Team",
+  "author": "Ivan Enev",
   "license": "GPL-3.0",
   "repository": {
     "type": "git",
